@@ -165,7 +165,7 @@ export function VoiceAgentPanel({ fileTree, selectedRepo, token }: { fileTree: a
 
   return (
     <div className="relative h-screen w-full overflow-hidden">
-        <button onClick={debug}>Debug</button>
+        {/* <button onClick={debug}>Debug</button> */}
       <Card className="flex h-full w-full flex-col items-center justify-center overflow-hidden p-6">
         <div className="flex flex-col items-center gap-6">
         <div className="relative size-32">

@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
     console.log("filePath", filePath)
     console.log("owner", owner)
     console.log("repo", repo)
-    
+
     const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`, {
         headers: {
             Authorization: `token ${process.env.NEXT_PUBLIC_GITHUB_PAT}`,
@@ -21,5 +21,6 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-    return NextResponse.json(data);
+
+    return NextResponse.json({ content: data.content });
 }
