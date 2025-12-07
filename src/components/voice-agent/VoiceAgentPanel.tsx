@@ -45,12 +45,25 @@ export function VoiceAgentPanel({ fileTree, selectedRepo }: { fileTree: any[], s
   )
 
   const debug = () => {
-    const fileList = fileTree.map(f => `- ${f.name} (${f.path})`).join('\n')
-        const result = `Found ${fileTree.length} files:\n${fileList}`
-        addLog(`Result: Found ${fileTree.length} files`, "info")
-        console.log(result)
-        return result
+    if (!fileTree || fileTree.length === 0) {
+      console.log("No files loaded. Please select a repository first.")
+      return "No files loaded"
+    }
 
+    // Just extract all paths
+    const paths = fileTree.map(item => item.path)
+
+    const repoInfo = selectedRepo ? `${selectedRepo.owner.login}/${selectedRepo.name}` : 'Unknown'
+
+    const result = {
+      repository: repoInfo,
+      totalItems: fileTree.length,
+      tree: paths,
+    }
+
+    console.log("Full Repository Tree:", JSON.stringify(result, null, 2))
+    addLog(`Loaded ${result.totalItems} items`, "info")
+    return result
   }
 
   const conversation = useConversation({
@@ -111,21 +124,24 @@ export function VoiceAgentPanel({ fileTree, selectedRepo }: { fileTree: any[], s
       },
       listFiles: async () => {
         addLog(`Tool called: listFiles`, "info")
-        
-        // TODO: Implement with file storage context
-        // const files = getAllFiles()
-        // const fileList = files.map(f => `- ${f.name} (${f.path})`).join('\n')
-        // const result = `Found ${files.length} files:\n${fileList}`
-        // addLog(`Result: Found ${files.length} files`, "info")
-        // return result
 
-        // get file structure (file tree)
-        const fileList = fileTree.map(f => `- ${f.name} (${f.path})`).join('\n')
-        const result = `Found ${fileTree.length} files:\n${fileList}`
-        addLog(`Result: Found ${fileTree.length} files`, "info")
-        return result
+        if (!fileTree || fileTree.length === 0) {
+          const msg = "No files loaded. Please select a repository first."
+          addLog(msg, "error")
+          return msg
+        }
 
-        return "listFiles not implemented"
+        const paths = fileTree.map(item => item.path)
+        const repoInfo = selectedRepo ? `${selectedRepo.owner.login}/${selectedRepo.name}` : 'Unknown'
+
+        const result = {
+          repository: repoInfo,
+          totalItems: fileTree.length,
+          tree: paths,
+        }
+
+        addLog(`Loaded ${result.totalItems} items`, "info")
+        return JSON.stringify(result, null, 2)
       }
     },
   })
