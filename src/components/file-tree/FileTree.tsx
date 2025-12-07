@@ -20,7 +20,7 @@ interface GitHubContent {
   download_url?: string;
 }
 
-export function FileTree({ className = '', onSelectFile }: FileTreeProps & { onSelectFile?: (content: string, fileName: string) => void }) {
+export function FileTree({ className = '', onSelectFile }: FileTreeProps & { onSelectFile?: (content: string, fileName: string, repo?: GitHubRepo) => void }) {
   const [token, setToken] = useState('');
   const [repos, setRepos] = useState<GitHubRepo[]>([]);
   const [selectedRepo, setSelectedRepo] = useState<GitHubRepo | null>(null);
@@ -85,7 +85,7 @@ export function FileTree({ className = '', onSelectFile }: FileTreeProps & { onS
       try {
         const response = await fetch(item.download_url);
         const content = await response.text();
-        onSelectFile(content, item.name);
+        onSelectFile(content, item.name, selectedRepo || undefined);
       } catch (err) {
         setError('Failed to fetch file content');
       }

@@ -8,10 +8,12 @@ import { VoiceAgentPanel } from '@/components/voice-agent/VoiceAgentPanel';
 export function ThreePanelLayout() {
     const [fileContent, setFileContent] = useState<string | null>(null);
     const [fileName, setFileName] = useState<string | null>(null);
+    const [repo, setRepo] = useState<any>(null);
 
-    const handleSelectFile = (content: string, name: string) => {
+    const handleSelectFile = (content: string, name: string, repo?: any) => {
         setFileContent(content)
         setFileName(name)
+        if (repo) setRepo(repo)
         // console.log(content, )
     }
 
@@ -24,7 +26,7 @@ export function ThreePanelLayout() {
 
         {/* Middle Panel - File Viewer */}
         <div className="border-r border-zinc-200 dark:border-zinc-800 overflow-hidden">
-            <FileViewer content={fileContent} fileName={fileName} />
+            <FileViewer content={fileContent} fileName={fileName} repo={repo} />
         </div>
 
         {/* Right Panel - Voice Agent */}
