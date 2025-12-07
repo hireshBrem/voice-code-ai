@@ -30,19 +30,7 @@ type LogEntry = {
   text: string
 }
 
-interface VoiceAgentPanelProps {
-  token: string
-  selectedRepo: {
-    name: string
-    owner: {
-      login: string
-    }
-  } | null
-  selectedFile: any
-  contents: any[]
-}
-
-export function VoiceAgentPanel({ token, selectedRepo, selectedFile, contents }: VoiceAgentPanelProps) {
+export function VoiceAgentPanel({ fileTree, selectedRepo, token }: { fileTree: any[], selectedRepo: any, token: string }) {
   const [agentState, setAgentState] = useState<AgentState>("disconnected")
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showLogs, setShowLogs] = useState(false)
@@ -56,27 +44,9 @@ export function VoiceAgentPanel({ token, selectedRepo, selectedFile, contents }:
     []
   )
 
-  const debug = () => {
-    if (!fileTree || fileTree.length === 0) {
-      console.log("No files loaded. Please select a repository first.")
-      return "No files loaded"
+    const debug = async () => {
+
     }
-
-    // Just extract all paths
-    const paths = fileTree.map(item => item.path)
-
-    const repoInfo = selectedRepo ? `${selectedRepo.owner.login}/${selectedRepo.name}` : 'Unknown'
-
-    const result = {
-      repository: repoInfo,
-      totalItems: fileTree.length,
-      tree: paths,
-    }
-
-    console.log("Full Repository Tree:", JSON.stringify(result, null, 2))
-    addLog(`Loaded ${result.totalItems} items`, "info")
-    return result
-  }
 
   const conversation = useConversation({
     onConnect: () => {
@@ -116,64 +86,7 @@ export function VoiceAgentPanel({ token, selectedRepo, selectedFile, contents }:
         // addLog(`Result: ${result.message}`, result.success ? "info" : "error")
         // return result.success ? result.message : `Error: ${result.message}`
         return "createFile not implemented"
-      },
-      readFile: async (parameters: { filePath: string }) => {
-        addLog(`Tool called: readFile for ${parameters.filePath}`, "info")
-
-        // Check if the requested file is already the selected file
-        if (selectedFile && selectedFile.path === parameters.filePath) {
-          addLog(`File found: ${selectedFile.name}`, "info")
-          return `File: ${selectedFile.name}\nPath: ${selectedFile.path}\n\nContent:\n${selectedFile.content}`
-        }
-
-        // File not currently selected, need to fetch from GitHub
-        if (!token || !selectedRepo) {
-          const error = "No GitHub token or repository selected. Please load a repository first."
-          addLog(error, "error")
-          return `Error: ${error}`
-        }
-
-        try {
-          addLog(`Fetching from GitHub: ${selectedRepo.owner.login}/${selectedRepo.name}/${parameters.filePath}`, "info")
-
-          // Fetch file metadata first
-          const metaResponse = await fetch(
-            `https://api.github.com/repos/${selectedRepo.owner.login}/${selectedRepo.name}/contents/${parameters.filePath}`,
-            {
-              headers: {
-                Authorization: `token ${token}`,
-                Accept: "application/vnd.github.v3+json",
-              },
-            }
-          )
-
-          if (!metaResponse.ok) {
-            const error = `Failed to fetch file from GitHub: ${metaResponse.statusText}`
-            addLog(error, "error")
-            return `Error: ${error}`
-          }
-
-          const metadata = await metaResponse.json()
-
-          // Fetch actual file content from download_url
-          if (!metadata.download_url) {
-            const error = "File does not have a download URL (might be too large or not a file)"
-            addLog(error, "error")
-            return `Error: ${error}`
-          }
-
-          const contentResponse = await fetch(metadata.download_url)
-          const content = await contentResponse.text()
-
-          addLog(`File fetched successfully: ${metadata.name}`, "info")
-
-          return `File: ${metadata.name}\nPath: ${parameters.filePath}\n\nContent:\n${content}`
-        } catch (error) {
-          const errorMsg = `Error fetching file: ${error instanceof Error ? error.message : String(error)}`
-          addLog(errorMsg, "error")
-          return `Error: ${errorMsg}`
-        }
-      },
+      },   
       listFiles: async () => {
         addLog(`Tool called: listFiles`, "info")
 
@@ -196,6 +109,7 @@ export function VoiceAgentPanel({ token, selectedRepo, selectedFile, contents }:
         return JSON.stringify(result, null, 2)
       }
     },
+    
   })
 
   const startConversation = useCallback(async () => {
@@ -208,6 +122,10 @@ export function VoiceAgentPanel({ token, selectedRepo, selectedFile, contents }:
         agentId: DEFAULT_AGENT.agentId,
         connectionType: "webrtc",
         onStatusChange: (status) => setAgentState(status.status),
+        dynamicVariables: {
+            owner: selectedRepo.owner.login,
+            repo: selectedRepo.name
+        },
       })
     } catch (error) {
       const errMsg = `Error starting conversation: ${error}`
