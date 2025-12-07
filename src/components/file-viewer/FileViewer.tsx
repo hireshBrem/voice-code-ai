@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 'use client';
 
 import { useState } from 'react';
@@ -25,6 +26,14 @@ export function FileViewer({ content, fileName, repo }: FileViewerProps) {
   };
 
   if (!content) {
+=======
+import { useFileStorage } from '@/contexts/FileStorageContext';
+
+export function FileViewer() {
+  const { fileContent, fileName } = useFileStorage();
+
+  if (!fileContent) {
+>>>>>>> 7cb1281ccc117eeab6b04965bdb2b9c37c1ea91b
     return (
       <div className="h-full bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center">
         <div className="text-center">
@@ -56,7 +65,7 @@ export function FileViewer({ content, fileName, repo }: FileViewerProps) {
       )}
       <div className="flex-1 overflow-auto p-4">
         <pre className="text-sm font-mono text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap">
-          {content}
+          {fileContent}
         </pre>
       </div>
     </div>
