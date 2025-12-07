@@ -1,39 +1,9 @@
-<<<<<<< HEAD
-'use client';
-
-import { useState } from 'react';
-import { saveRepoToRedis } from '@/app/action';
-
-interface FileViewerProps {
-  content?: string | null;
-  fileName?: string | null;
-  repo?: any;
-}
-
-export function FileViewer({ content, fileName, repo }: FileViewerProps) {
-  const [isSaving, setIsSaving] = useState(false);
-
-  const handleSave = async () => {
-    if (!repo) return;
-    setIsSaving(true);
-    try {
-      await saveRepoToRedis(repo);
-    } catch (error) {
-      console.error('Failed to save repo:', error);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  if (!content) {
-=======
 import { useFileStorage } from '@/contexts/FileStorageContext';
 
 export function FileViewer() {
   const { fileContent, fileName } = useFileStorage();
 
   if (!fileContent) {
->>>>>>> 7cb1281ccc117eeab6b04965bdb2b9c37c1ea91b
     return (
       <div className="h-full bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center">
         <div className="text-center">
@@ -52,13 +22,13 @@ export function FileViewer() {
           <span className="text-sm font-mono text-zinc-700 dark:text-zinc-300">
             {fileName}
           </span>
-          {repo && (
+          {fileContent && (
             <button
-              onClick={handleSave}
-              disabled={isSaving}
+            //   onClick={handleSave}
+              disabled={false}
               className="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded transition-colors"
             >
-              {isSaving ? 'Saving...' : 'Save'}
+              Save
             </button>
           )}
         </div>

@@ -90,21 +90,9 @@ export function VoiceAgentPanel() {
       setAgentState("disconnected")
     },
     clientTools: {
-      insertCode: async (parameters: any) => {
-        addLog(`Tool called: insertCode`, "info")
-        const result = voiceTools.insertCode(parameters)
-        addLog(`Result: ${result.message}`, result.success ? "info" : "error")
-        return result.success ? result.message : `Error: ${result.message}`
-      },
-      replaceCode: async (parameters: any) => {
-        addLog(`Tool called: replaceCode`, "info")
-        const result = voiceTools.replaceCode(parameters)
-        addLog(`Result: ${result.message}`, result.success ? "info" : "error")
-        return result.success ? result.message : `Error: ${result.message}`
-      },
-      deleteCode: async (parameters: any) => {
-        addLog(`Tool called: deleteCode`, "info")
-        const result = voiceTools.deleteCode(parameters)
+      updateCode: async (parameters: any) => {
+        addLog(`Tool called: updateCode`, "info")
+        const result = voiceTools.updateCode(parameters)
         addLog(`Result: ${result.message}`, result.success ? "info" : "error")
         return result.success ? result.message : `Error: ${result.message}`
       },
@@ -191,20 +179,7 @@ export function VoiceAgentPanel() {
         const result = `Found ${files.length} files:\n${fileList}`
         addLog(`Result: Found ${files.length} files`, "info")
         return result
-      },
-      searchFiles: async (parameters: any) => {
-        addLog(`Tool called: searchFiles with query: ${parameters.query}`, "info")
-        const files = getAllFiles()
-        const query = parameters.query.toLowerCase()
-        const matches = files.filter(f =>
-          f.name.toLowerCase().includes(query) ||
-          f.content.toLowerCase().includes(query)
-        )
-        const matchList = matches.map(f => `- ${f.name} (${f.path})`).join('\n')
-        const result = `Found ${matches.length} matches:\n${matchList}`
-        addLog(`Result: Found ${matches.length} matches`, "info")
-        return result
-      },
+      }
     },
   })
 

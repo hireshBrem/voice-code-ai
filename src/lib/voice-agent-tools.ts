@@ -38,6 +38,7 @@ export class VoiceAgentTools {
   private addFile: (file: FileData) => void;
   private deleteFile: (path: string) => void;
   private currentFile: FileData | null;
+  
 
   constructor(
     getFile: (path: string) => FileData | undefined,
@@ -225,6 +226,29 @@ export class VoiceAgentTools {
       return {
         success: false,
         message: `Error creating file: ${error instanceof Error ? error.message : String(error)}`,
+      };
+    }
+  }
+
+  /**
+   * Update code in a file (can replace entire content or update specific parts)
+   */
+  updateCode(params: { old_code_param: string, new_code_param: string }): ToolResult {
+    try {
+      const newContent = this.currentFile?.content.replace(params.old_code_param, params.new_code_param);
+      if (!newContent) {
+        return { success: false, message: 'No content to update' };
+      }
+      this.updateFile(this.currentFile?.path || '', newContent || '');
+      return {  
+        success: true,
+        message: `Code updated in ${this.currentFile?.name}`,
+        data: { filePath: this.currentFile?.path || '' },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: `Error updating code: ${error instanceof Error ? error.message : String(error)}`,
       };
     }
   }
