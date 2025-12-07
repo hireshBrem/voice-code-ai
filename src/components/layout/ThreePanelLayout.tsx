@@ -1,36 +1,29 @@
 'use client';
 
-import { useState } from 'react';
 import { FileTree } from '@/components/file-tree/FileTree';
 import { FileViewer } from '@/components/file-viewer/FileViewer';
 import { VoiceAgentPanel } from '@/components/voice-agent/VoiceAgentPanel';
+import { FileStorageProvider } from '@/contexts/FileStorageContext';
 
 export function ThreePanelLayout() {
-    const [fileContent, setFileContent] = useState<string | null>(null);
-    const [fileName, setFileName] = useState<string | null>(null);
-
-    const handleSelectFile = (content: string, name: string) => {
-        setFileContent(content)
-        setFileName(name)
-        // console.log(content, )
-    }
-
     return (
-    <div className="grid grid-cols-[20%_50%_30%] h-screen w-full bg-white dark:bg-black">
-        {/* Left Panel - File Tree */}
-        <div className="border-r border-zinc-200 dark:border-zinc-800 overflow-hidden">
-            <FileTree onSelectFile={handleSelectFile} />
-        </div>
+    <FileStorageProvider>
+        <div className="grid grid-cols-[20%_50%_30%] h-screen w-full bg-white dark:bg-black">
+            {/* Left Panel - File Tree */}
+            <div className="border-r border-zinc-200 dark:border-zinc-800 overflow-hidden">
+                <FileTree />
+            </div>
 
-        {/* Middle Panel - File Viewer */}
-        <div className="border-r border-zinc-200 dark:border-zinc-800 overflow-hidden">
-            <FileViewer content={fileContent} fileName={fileName} />
-        </div>
+            {/* Middle Panel - File Viewer */}
+            <div className="border-r border-zinc-200 dark:border-zinc-800 overflow-hidden">
+                <FileViewer />
+            </div>
 
-        {/* Right Panel - Voice Agent */}
-        <div className="overflow-hidden">
-            <VoiceAgentPanel />
+            {/* Right Panel - Voice Agent */}
+            <div className="overflow-hidden">
+                <VoiceAgentPanel />
+            </div>
         </div>
-    </div>
+    </FileStorageProvider>
     )
 }

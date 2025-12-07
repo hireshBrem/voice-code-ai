@@ -1,10 +1,9 @@
-interface FileViewerProps {
-  content?: string | null;
-  fileName?: string | null;
-}
+import { useFileStorage } from '@/contexts/FileStorageContext';
 
-export function FileViewer({ content, fileName }: FileViewerProps) {
-  if (!content) {
+export function FileViewer() {
+  const { fileContent, fileName } = useFileStorage();
+
+  if (!fileContent) {
     return (
       <div className="h-full bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center">
         <div className="text-center">
@@ -27,7 +26,7 @@ export function FileViewer({ content, fileName }: FileViewerProps) {
       )}
       <div className="flex-1 overflow-auto p-4">
         <pre className="text-sm font-mono text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap">
-          {content}
+          {fileContent}
         </pre>
       </div>
     </div>

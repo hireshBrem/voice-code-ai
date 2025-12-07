@@ -20,7 +20,10 @@ interface GitHubContent {
   download_url?: string;
 }
 
-export function FileTree({ className = '', onSelectFile }: FileTreeProps & { onSelectFile?: (content: string, fileName: string) => void }) {
+import { useFileStorage } from '@/contexts/FileStorageContext';
+
+export function FileTree({ className = '' }: FileTreeProps) {
+  const { addFile, setCurrentFile, setFileContent, setFileName, setGithubToken, setCurrentRepo } = useFileStorage();
   const [token, setToken] = useState('');
   const [repos, setRepos] = useState<GitHubRepo[]>([]);
   const [selectedRepo, setSelectedRepo] = useState<GitHubRepo | null>(null);
@@ -44,6 +47,8 @@ export function FileTree({ className = '', onSelectFile }: FileTreeProps & { onS
       if (!response.ok) throw new Error('Failed to fetch repos');
       const data = await response.json();
       setRepos(data);
+      // Save token to context for voice agent to use
+      setGithubToken(token);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch repos');
     } finally {
@@ -76,16 +81,31 @@ export function FileTree({ className = '', onSelectFile }: FileTreeProps & { onS
   const handleRepoClick = (repo: GitHubRepo) => {
     setSelectedRepo(repo);
     fetchContents(repo.owner.login, repo.name);
+    // Save current repo to context for voice agent to use
+    setCurrentRepo({ owner: repo.owner.login, name: repo.name });
   };
 
   const handleContentClick = async (item: GitHubContent) => {
     if (item.type === 'dir' && selectedRepo) {
       fetchContents(selectedRepo.owner.login, selectedRepo.name, item.path);
-    } else if (item.type === 'file' && item.download_url && onSelectFile) {
+    } else if (item.type === 'file' && item.download_url) {
       try {
         const response = await fetch(item.download_url);
         const content = await response.text();
-        onSelectFile(content, item.name);
+
+        // Store file in context
+        const fileData = {
+          path: item.path,
+          name: item.name,
+          content,
+          repo: selectedRepo?.name,
+          owner: selectedRepo?.owner.login,
+        };
+
+        addFile(fileData);
+        setCurrentFile(fileData);
+        setFileContent(content);
+        setFileName(item.name);
       } catch (err) {
         setError('Failed to fetch file content');
       }
