@@ -13,12 +13,6 @@ interface GitHubRepo {
   };
 }
 
-interface GitHubContent {
-  name: string;
-  path: string;
-  type: 'file' | 'dir';
-  download_url?: string;
-}
 
 import { useFileStorage } from '@/contexts/FileStorageContext';
 
@@ -27,10 +21,16 @@ export function FileTree({ className = '' }: FileTreeProps) {
   const [token, setToken] = useState('');
   const [repos, setRepos] = useState<GitHubRepo[]>([]);
   const [selectedRepo, setSelectedRepo] = useState<GitHubRepo | null>(null);
-  const [contents, setContents] = useState<GitHubContent[]>([]);
+  const [contents, setContents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  console.log('FileTree rendered:', contents);
+//   log all the pathsonly
+    
+    contents.forEach(item => {
+        console.log('FileTree item path:', item.path);
+    });
   const fetchRepos = async () => {
     if (!token) {
       setError('Please enter a GitHub PAT token');
@@ -85,7 +85,7 @@ export function FileTree({ className = '' }: FileTreeProps) {
     setCurrentRepo({ owner: repo.owner.login, name: repo.name });
   };
 
-  const handleContentClick = async (item: GitHubContent) => {
+  const handleContentClick = async (item: any) => {
     if (item.type === 'dir' && selectedRepo) {
       fetchContents(selectedRepo.owner.login, selectedRepo.name, item.path);
     } else if (item.type === 'file' && item.download_url) {

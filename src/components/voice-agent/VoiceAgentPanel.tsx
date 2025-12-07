@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useState, useMemo } from "react"
+import { useCallback, useState } from "react"
 import { useConversation } from "@elevenlabs/react"
 import { AnimatePresence, motion } from "framer-motion"
 import { Loader2Icon, PhoneIcon, PhoneOffIcon } from "lucide-react"
@@ -10,8 +10,6 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Orb } from "@/components/ui/orb"
 import { ShimmeringText } from "@/components/ui/shimmering-text"
-import { useFileStorage } from "@/contexts/FileStorageContext"
-import { VoiceAgentTools } from "@/lib/voice-agent-tools"
 
 const DEFAULT_AGENT = {
     agentId: process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID!,
@@ -37,27 +35,6 @@ export function VoiceAgentPanel() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showLogs, setShowLogs] = useState(false)
   const [logs, setLogs] = useState<LogEntry[]>([])
-
-  // Get file storage context
-  const {
-    getFile,
-    updateFile,
-    addFile,
-    deleteFile,
-    currentFile,
-    getAllFiles,
-    githubToken,
-    currentRepo,
-    setCurrentFile,
-    setFileContent,
-    setFileName
-  } = useFileStorage()
-
-  // Initialize voice agent tools
-  const voiceTools = useMemo(
-    () => new VoiceAgentTools(getFile, updateFile, addFile, deleteFile, currentFile),
-    [getFile, updateFile, addFile, deleteFile, currentFile]
-  )
 
   const addLog = useCallback(
     (text: string, type: "info" | "error" | "message" = "info") => {
@@ -90,95 +67,48 @@ export function VoiceAgentPanel() {
       setAgentState("disconnected")
     },
     clientTools: {
-      updateCode: async (parameters: any) => {
+      updateCode: async (parameters: { code: string; filePath?: string }) => {
         addLog(`Tool called: updateCode`, "info")
-        const result = voiceTools.updateCode(parameters)
-        addLog(`Result: ${result.message}`, result.success ? "info" : "error")
-        return result.success ? result.message : `Error: ${result.message}`
+        // TODO: Implement with file storage context
+        // const result = voiceTools.updateCode(parameters)
+        // addLog(`Result: ${result.message}`, result.success ? "info" : "error")
+        // return result.success ? result.message : `Error: ${result.message}`
+        return "updateCode not implemented"
       },
-      createFile: async (parameters: any) => {
+      createFile: async (parameters: { fileName: string; content: string; filePath?: string }) => {
         addLog(`Tool called: createFile`, "info")
-        const result = voiceTools.createFile(parameters)
-        addLog(`Result: ${result.message}`, result.success ? "info" : "error")
-        return result.success ? result.message : `Error: ${result.message}`
+        // TODO: Implement with file storage context
+        // const result = voiceTools.createFile(parameters)
+        // addLog(`Result: ${result.message}`, result.success ? "info" : "error")
+        // return result.success ? result.message : `Error: ${result.message}`
+        return "createFile not implemented"
       },
-      readFile: async (parameters: any) => {
+      readFile: async (parameters: { filePath: string }) => {
         addLog(`Tool called: readFile for ${parameters.filePath}`, "info")
-
+        // TODO: Implement with file storage context
         // Check if file is already loaded in context
-        const existingFile = getFile(parameters.filePath)
-        if (existingFile) {
-          addLog(`File found in context: ${existingFile.name}`, "info")
-          return `File: ${existingFile.name}\nPath: ${existingFile.path}\n\nContent:\n${existingFile.content}`
-        }
-
+        // const existingFile = getFile(parameters.filePath)
+        // if (existingFile) {
+        //   addLog(`File found in context: ${existingFile.name}`, "info")
+        //   return `File: ${existingFile.name}\nPath: ${existingFile.path}\n\nContent:\n${existingFile.content}`
+        // }
         // File not in context, fetch from GitHub
-        if (!githubToken || !currentRepo) {
-          const error = "No GitHub token or repository selected. Please load a repository first."
-          addLog(error, "error")
-          return `Error: ${error}`
-        }
-
-        try {
-          addLog(`Fetching from GitHub: ${currentRepo.owner}/${currentRepo.name}/${parameters.filePath}`, "info")
-
-          // Get file info from GitHub API
-          const apiUrl = `https://api.github.com/repos/${currentRepo.owner}/${currentRepo.name}/contents/${parameters.filePath}`
-          const response = await fetch(apiUrl, {
-            headers: {
-              Authorization: `token ${githubToken}`,
-            },
-          })
-
-          if (!response.ok) {
-            throw new Error(`GitHub API error: ${response.status}`)
-          }
-
-          const data = await response.json()
-
-          if (data.type === 'file' && data.download_url) {
-            // Fetch actual file content
-            const contentResponse = await fetch(data.download_url)
-            if (!contentResponse.ok) {
-              throw new Error('Failed to fetch file content')
-            }
-
-            const content = await contentResponse.text()
-
-            // Store in context
-            const fileData = {
-              path: parameters.filePath,
-              name: data.name,
-              content,
-              repo: currentRepo.name,
-              owner: currentRepo.owner,
-            }
-
-            addFile(fileData)
-            setCurrentFile(fileData)
-            setFileContent(content)
-            setFileName(data.name)
-
-            addLog(`Successfully loaded: ${data.name}`, "info")
-            return `File: ${data.name}\nPath: ${parameters.filePath}\n\nContent:\n${content}`
-          } else {
-            const error = `Path is a ${data.type}, not a file`
-            addLog(error, "error")
-            return `Error: ${error}`
-          }
-        } catch (error) {
-          const errorMsg = `Failed to read file: ${error instanceof Error ? error.message : String(error)}`
-          addLog(errorMsg, "error")
-          return `Error: ${errorMsg}`
-        }
+        // if (!githubToken || !currentRepo) {
+        //   const error = "No GitHub token or repository selected. Please load a repository first."
+        //   addLog(error, "error")
+        //   return `Error: ${error}`
+        // }
+        return "readFile not implemented"
       },
       listFiles: async () => {
         addLog(`Tool called: listFiles`, "info")
-        const files = getAllFiles()
-        const fileList = files.map(f => `- ${f.name} (${f.path})`).join('\n')
-        const result = `Found ${files.length} files:\n${fileList}`
-        addLog(`Result: Found ${files.length} files`, "info")
-        return result
+        // TODO: Implement with file storage context
+        // const files = getAllFiles()
+        // const fileList = files.map(f => `- ${f.name} (${f.path})`).join('\n')
+        // const result = `Found ${files.length} files:\n${fileList}`
+        // addLog(`Result: Found ${files.length} files`, "info")
+        // return result
+        return "listFiles not implemented"
       }
     },
   })

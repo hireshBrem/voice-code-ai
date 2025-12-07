@@ -11,6 +11,13 @@ export interface FileData {
   language?: string;
 }
 
+export interface GitHubContent {
+  name: string;
+  path: string;
+  type: 'file' | 'dir';
+  download_url?: string;
+}
+
 interface FileStorageContextType {
   // File storage
   files: Map<string, FileData>;
