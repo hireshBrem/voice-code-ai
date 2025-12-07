@@ -131,7 +131,12 @@ export function ThreePanelLayout() {
 
         {/* Right Panel - Voice Agent */}
         <div className="overflow-hidden">
-            <VoiceAgentPanel fileTree={contents} selectedRepo={selectedRepo} />
+            <VoiceAgentPanel
+                token={token}
+                selectedRepo={selectedRepo}
+                selectedFile={selectedFile}
+                contents={contents}
+            />
         </div>
     </div>
     )

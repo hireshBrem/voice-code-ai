@@ -30,7 +30,19 @@ type LogEntry = {
   text: string
 }
 
-export function VoiceAgentPanel({ fileTree, selectedRepo }: { fileTree: any[], selectedRepo: any }) {
+interface VoiceAgentPanelProps {
+  token: string
+  selectedRepo: {
+    name: string
+    owner: {
+      login: string
+    }
+  } | null
+  selectedFile: any
+  contents: any[]
+}
+
+export function VoiceAgentPanel({ token, selectedRepo, selectedFile, contents }: VoiceAgentPanelProps) {
   const [agentState, setAgentState] = useState<AgentState>("disconnected")
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showLogs, setShowLogs] = useState(false)
@@ -45,12 +57,11 @@ export function VoiceAgentPanel({ fileTree, selectedRepo }: { fileTree: any[], s
   )
 
   const debug = () => {
-    const fileList = fileTree.map(f => `- ${f.name} (${f.path})`).join('\n')
-        const result = `Found ${fileTree.length} files:\n${fileList}`
-        addLog(`Result: Found ${fileTree.length} files`, "info")
-        console.log(result)
-        return result
-
+    const fileList = contents.map((f: any) => `- ${f.name} (${f.path})`).join('\n')
+    const result = `Found ${contents.length} files:\n${fileList}`
+    addLog(`Result: Found ${contents.length} files`, "info")
+    console.log(result)
+    return result
   }
 
   const conversation = useConversation({
@@ -94,38 +105,68 @@ export function VoiceAgentPanel({ fileTree, selectedRepo }: { fileTree: any[], s
       },
       readFile: async (parameters: { filePath: string }) => {
         addLog(`Tool called: readFile for ${parameters.filePath}`, "info")
-        // TODO: Implement with file storage context
-        // Check if file is already loaded in context
-        // const existingFile = getFile(parameters.filePath)
-        // if (existingFile) {
-        //   addLog(`File found in context: ${existingFile.name}`, "info")
-        //   return `File: ${existingFile.name}\nPath: ${existingFile.path}\n\nContent:\n${existingFile.content}`
-        // }
-        // File not in context, fetch from GitHub
-        // if (!githubToken || !currentRepo) {
-        //   const error = "No GitHub token or repository selected. Please load a repository first."
-        //   addLog(error, "error")
-        //   return `Error: ${error}`
-        // }
-        return "readFile not implemented"
+
+        // Check if the requested file is already the selected file
+        if (selectedFile && selectedFile.path === parameters.filePath) {
+          addLog(`File found: ${selectedFile.name}`, "info")
+          return `File: ${selectedFile.name}\nPath: ${selectedFile.path}\n\nContent:\n${selectedFile.content}`
+        }
+
+        // File not currently selected, need to fetch from GitHub
+        if (!token || !selectedRepo) {
+          const error = "No GitHub token or repository selected. Please load a repository first."
+          addLog(error, "error")
+          return `Error: ${error}`
+        }
+
+        try {
+          addLog(`Fetching from GitHub: ${selectedRepo.owner.login}/${selectedRepo.name}/${parameters.filePath}`, "info")
+
+          // Fetch file metadata first
+          const metaResponse = await fetch(
+            `https://api.github.com/repos/${selectedRepo.owner.login}/${selectedRepo.name}/contents/${parameters.filePath}`,
+            {
+              headers: {
+                Authorization: `token ${token}`,
+                Accept: "application/vnd.github.v3+json",
+              },
+            }
+          )
+
+          if (!metaResponse.ok) {
+            const error = `Failed to fetch file from GitHub: ${metaResponse.statusText}`
+            addLog(error, "error")
+            return `Error: ${error}`
+          }
+
+          const metadata = await metaResponse.json()
+
+          // Fetch actual file content from download_url
+          if (!metadata.download_url) {
+            const error = "File does not have a download URL (might be too large or not a file)"
+            addLog(error, "error")
+            return `Error: ${error}`
+          }
+
+          const contentResponse = await fetch(metadata.download_url)
+          const content = await contentResponse.text()
+
+          addLog(`File fetched successfully: ${metadata.name}`, "info")
+
+          return `File: ${metadata.name}\nPath: ${parameters.filePath}\n\nContent:\n${content}`
+        } catch (error) {
+          const errorMsg = `Error fetching file: ${error instanceof Error ? error.message : String(error)}`
+          addLog(errorMsg, "error")
+          return `Error: ${errorMsg}`
+        }
       },
       listFiles: async () => {
         addLog(`Tool called: listFiles`, "info")
-        
-        // TODO: Implement with file storage context
-        // const files = getAllFiles()
-        // const fileList = files.map(f => `- ${f.name} (${f.path})`).join('\n')
-        // const result = `Found ${files.length} files:\n${fileList}`
-        // addLog(`Result: Found ${files.length} files`, "info")
-        // return result
 
-        // get file structure (file tree)
-        const fileList = fileTree.map(f => `- ${f.name} (${f.path})`).join('\n')
-        const result = `Found ${fileTree.length} files:\n${fileList}`
-        addLog(`Result: Found ${fileTree.length} files`, "info")
+        const fileList = contents.map((f: any) => `- ${f.name} (${f.path})`).join('\n')
+        const result = `Found ${contents.length} files:\n${fileList}`
+        addLog(`Result: Found ${contents.length} files`, "info")
         return result
-
-        return "listFiles not implemented"
       }
     },
   })
