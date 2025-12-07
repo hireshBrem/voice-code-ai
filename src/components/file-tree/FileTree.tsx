@@ -1,8 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-import { FileTreeProps } from './types';
-
 interface GitHubRepo {
   id: number;
   name: string;
@@ -13,119 +10,35 @@ interface GitHubRepo {
   };
 }
 
+interface FileTreeProps {
+  token: string;
+  setToken: (token: string) => void;
+  repos: GitHubRepo[];
+  selectedRepo: GitHubRepo | null;
+  contents: any[];
+  isLoading: boolean;
+  error: string | null;
+  onFetchRepos: () => void;
+  onRepoClick: (repo: GitHubRepo) => void;
+  onContentClick: (item: any) => void;
+  onBackToRepos: () => void;
+}
 
-import { useFileStorage } from '@/contexts/FileStorageContext';
-
-export function FileTree({ className = '' }: FileTreeProps) {
-  const { addFile, setCurrentFile, setFileContent, setFileName, setGithubToken, setCurrentRepo } = useFileStorage();
-  const [token, setToken] = useState('');
-  const [repos, setRepos] = useState<GitHubRepo[]>([]);
-  const [selectedRepo, setSelectedRepo] = useState<GitHubRepo | null>(null);
-  const [contents, setContents] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  console.log('FileTree rendered:', contents);
-//   log all the pathsonly
-    
-    contents.forEach(item => {
-        console.log('FileTree item path:', item.path);
-    });
-  const fetchRepos = async () => {
-    if (!token) {
-      setError('Please enter a GitHub PAT token');
-      return;
-    }
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await fetch('https://api.github.com/user/repos', {
-        headers: {
-          Authorization: `token ${token}`,
-        },
-      });
-      if (!response.ok) throw new Error('Failed to fetch repos');
-      const data = await response.json();
-      setRepos(data);
-      // Save token to context for voice agent to use
-      setGithubToken(token);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch repos');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchContents = async (owner: string, repo: string, path: string = '') => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(
-        `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
-        {
-          headers: {
-            Authorization: `token ${token}`,
-          },
-        }
-      );
-      if (!response.ok) throw new Error('Failed to fetch contents');
-      const data = await response.json();
-      setContents(Array.isArray(data) ? data : [data]);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch contents');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleRepoClick = (repo: GitHubRepo) => {
-    setSelectedRepo(repo);
-    fetchContents(repo.owner.login, repo.name);
-    // Save current repo to context for voice agent to use
-    setCurrentRepo({ owner: repo.owner.login, name: repo.name });
-  };
-
-  const handleContentClick = async (item: any) => {
-    if (item.type === 'dir' && selectedRepo) {
-      fetchContents(selectedRepo.owner.login, selectedRepo.name, item.path);
-    } else if (item.type === 'file' && item.download_url) {
-      try {
-        const response = await fetch(item.download_url);
-        const content = await response.text();
-
-        // Store file in context
-        const fileData = {
-          path: item.path,
-          name: item.name,
-          content,
-          repo: selectedRepo?.name,
-          owner: selectedRepo?.owner.login,
-        };
-
-        addFile(fileData);
-        setCurrentFile(fileData);
-        setFileContent(content);
-        setFileName(item.name);
-      } catch (err) {
-        setError('Failed to fetch file content');
-      }
-    }
-  };
-
-  const handleBack = () => {
-    if (contents.length > 0 && selectedRepo) {
-      const currentPath = contents[0]?.path || '';
-      const parentPath = currentPath.split('/').slice(0, -2).join('/');
-      if (parentPath) {
-        fetchContents(selectedRepo.owner.login, selectedRepo.name, parentPath);
-      } else {
-        fetchContents(selectedRepo.owner.login, selectedRepo.name);
-      }
-    }
-  };
-
+export function FileTree({
+  token,
+  setToken,
+  repos,
+  selectedRepo,
+  contents,
+  isLoading,
+  error,
+  onFetchRepos,
+  onRepoClick,
+  onContentClick,
+  onBackToRepos,
+}: FileTreeProps) {
   return (
-    <div className={`flex flex-col h-full bg-white dark:bg-black ${className}`}>
+    <div className="flex flex-col h-full bg-white dark:bg-black">
       <div className="border-b border-zinc-200 dark:border-zinc-800 px-4 py-3">
         <h2 className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
           GitHub Explorer
@@ -142,7 +55,7 @@ export function FileTree({ className = '' }: FileTreeProps) {
             className="w-full px-3 py-2 text-sm border border-zinc-300 dark:border-zinc-700 rounded bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100"
           />
           <button
-            onClick={fetchRepos}
+            onClick={onFetchRepos}
             disabled={isLoading}
             className="w-full px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
           >
@@ -161,7 +74,7 @@ export function FileTree({ className = '' }: FileTreeProps) {
             {repos.map((repo) => (
               <div
                 key={repo.id}
-                onClick={() => handleRepoClick(repo)}
+                onClick={() => onRepoClick(repo)}
                 className="flex items-center gap-2 px-4 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer text-sm"
               >
                 <svg className="w-4 h-4 text-zinc-500" fill="currentColor" viewBox="0 0 16 16">
@@ -181,7 +94,7 @@ export function FileTree({ className = '' }: FileTreeProps) {
         {selectedRepo && (
           <div>
             <div
-              onClick={() => { setSelectedRepo(null); setContents([]); }}
+              onClick={onBackToRepos}
               className="flex items-center gap-2 px-4 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer text-sm border-b border-zinc-200 dark:border-zinc-800"
             >
               <svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -192,7 +105,7 @@ export function FileTree({ className = '' }: FileTreeProps) {
             {contents.map((item) => (
               <div
                 key={item.path}
-                onClick={() => handleContentClick(item)}
+                onClick={() => onContentClick(item)}
                 className="flex items-center gap-2 px-4 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer text-sm"
               >
                 {item.type === 'dir' ? (

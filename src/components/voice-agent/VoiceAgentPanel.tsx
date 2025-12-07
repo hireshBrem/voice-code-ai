@@ -108,6 +108,10 @@ export function VoiceAgentPanel() {
         // const result = `Found ${files.length} files:\n${fileList}`
         // addLog(`Result: Found ${files.length} files`, "info")
         // return result
+
+        // get file structure (file tree)
+        // const fileTree = getFileTree()
+
         return "listFiles not implemented"
       }
     },
