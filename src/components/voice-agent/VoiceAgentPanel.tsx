@@ -30,7 +30,7 @@ type LogEntry = {
   text: string
 }
 
-export function VoiceAgentPanel({ fileTree, selectedRepo }: { fileTree: any[], selectedRepo: any }) {
+export function VoiceAgentPanel({ fileTree, selectedRepo, token }: { fileTree: any[], selectedRepo: any, token: string }) {
   const [agentState, setAgentState] = useState<AgentState>("disconnected")
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showLogs, setShowLogs] = useState(false)
@@ -44,27 +44,9 @@ export function VoiceAgentPanel({ fileTree, selectedRepo }: { fileTree: any[], s
     []
   )
 
-  const debug = () => {
-    if (!fileTree || fileTree.length === 0) {
-      console.log("No files loaded. Please select a repository first.")
-      return "No files loaded"
+    const debug = async () => {
+
     }
-
-    // Just extract all paths
-    const paths = fileTree.map(item => item.path)
-
-    const repoInfo = selectedRepo ? `${selectedRepo.owner.login}/${selectedRepo.name}` : 'Unknown'
-
-    const result = {
-      repository: repoInfo,
-      totalItems: fileTree.length,
-      tree: paths,
-    }
-
-    console.log("Full Repository Tree:", JSON.stringify(result, null, 2))
-    addLog(`Loaded ${result.totalItems} items`, "info")
-    return result
-  }
 
   const conversation = useConversation({
     onConnect: () => {
@@ -105,23 +87,6 @@ export function VoiceAgentPanel({ fileTree, selectedRepo }: { fileTree: any[], s
         // return result.success ? result.message : `Error: ${result.message}`
         return "createFile not implemented"
       },
-      readFile: async (parameters: { filePath: string }) => {
-        addLog(`Tool called: readFile for ${parameters.filePath}`, "info")
-        // TODO: Implement with file storage context
-        // Check if file is already loaded in context
-        // const existingFile = getFile(parameters.filePath)
-        // if (existingFile) {
-        //   addLog(`File found in context: ${existingFile.name}`, "info")
-        //   return `File: ${existingFile.name}\nPath: ${existingFile.path}\n\nContent:\n${existingFile.content}`
-        // }
-        // File not in context, fetch from GitHub
-        // if (!githubToken || !currentRepo) {
-        //   const error = "No GitHub token or repository selected. Please load a repository first."
-        //   addLog(error, "error")
-        //   return `Error: ${error}`
-        // }
-        return "readFile not implemented"
-      },
       listFiles: async () => {
         addLog(`Tool called: listFiles`, "info")
 
@@ -144,6 +109,7 @@ export function VoiceAgentPanel({ fileTree, selectedRepo }: { fileTree: any[], s
         return JSON.stringify(result, null, 2)
       }
     },
+    
   })
 
   const startConversation = useCallback(async () => {
@@ -156,6 +122,10 @@ export function VoiceAgentPanel({ fileTree, selectedRepo }: { fileTree: any[], s
         agentId: DEFAULT_AGENT.agentId,
         connectionType: "webrtc",
         onStatusChange: (status) => setAgentState(status.status),
+        dynamicVariables: {
+            owner: selectedRepo.owner.login,
+            repo: selectedRepo.name
+        },
       })
     } catch (error) {
       const errMsg = `Error starting conversation: ${error}`
