@@ -57,10 +57,24 @@ export function VoiceAgentPanel({ token, selectedRepo, selectedFile, contents }:
   )
 
   const debug = () => {
-    const fileList = contents.map((f: any) => `- ${f.name} (${f.path})`).join('\n')
-    const result = `Found ${contents.length} files:\n${fileList}`
-    addLog(`Result: Found ${contents.length} files`, "info")
-    console.log(result)
+    if (!fileTree || fileTree.length === 0) {
+      console.log("No files loaded. Please select a repository first.")
+      return "No files loaded"
+    }
+
+    // Just extract all paths
+    const paths = fileTree.map(item => item.path)
+
+    const repoInfo = selectedRepo ? `${selectedRepo.owner.login}/${selectedRepo.name}` : 'Unknown'
+
+    const result = {
+      repository: repoInfo,
+      totalItems: fileTree.length,
+      tree: paths,
+    }
+
+    console.log("Full Repository Tree:", JSON.stringify(result, null, 2))
+    addLog(`Loaded ${result.totalItems} items`, "info")
     return result
   }
 
@@ -163,10 +177,23 @@ export function VoiceAgentPanel({ token, selectedRepo, selectedFile, contents }:
       listFiles: async () => {
         addLog(`Tool called: listFiles`, "info")
 
-        const fileList = contents.map((f: any) => `- ${f.name} (${f.path})`).join('\n')
-        const result = `Found ${contents.length} files:\n${fileList}`
-        addLog(`Result: Found ${contents.length} files`, "info")
-        return result
+        if (!fileTree || fileTree.length === 0) {
+          const msg = "No files loaded. Please select a repository first."
+          addLog(msg, "error")
+          return msg
+        }
+
+        const paths = fileTree.map(item => item.path)
+        const repoInfo = selectedRepo ? `${selectedRepo.owner.login}/${selectedRepo.name}` : 'Unknown'
+
+        const result = {
+          repository: repoInfo,
+          totalItems: fileTree.length,
+          tree: paths,
+        }
+
+        addLog(`Loaded ${result.totalItems} items`, "info")
+        return JSON.stringify(result, null, 2)
       }
     },
   })
