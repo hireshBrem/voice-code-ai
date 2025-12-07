@@ -30,7 +30,7 @@ type LogEntry = {
   text: string
 }
 
-export function VoiceAgentPanel() {
+export function VoiceAgentPanel({ fileTree, selectedRepo }: { fileTree: any[], selectedRepo: any }) {
   const [agentState, setAgentState] = useState<AgentState>("disconnected")
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showLogs, setShowLogs] = useState(false)
@@ -43,6 +43,15 @@ export function VoiceAgentPanel() {
     },
     []
   )
+
+  const debug = () => {
+    const fileList = fileTree.map(f => `- ${f.name} (${f.path})`).join('\n')
+        const result = `Found ${fileTree.length} files:\n${fileList}`
+        addLog(`Result: Found ${fileTree.length} files`, "info")
+        console.log(result)
+        return result
+
+  }
 
   const conversation = useConversation({
     onConnect: () => {
@@ -102,6 +111,7 @@ export function VoiceAgentPanel() {
       },
       listFiles: async () => {
         addLog(`Tool called: listFiles`, "info")
+        
         // TODO: Implement with file storage context
         // const files = getAllFiles()
         // const fileList = files.map(f => `- ${f.name} (${f.path})`).join('\n')
@@ -110,7 +120,10 @@ export function VoiceAgentPanel() {
         // return result
 
         // get file structure (file tree)
-        // const fileTree = getFileTree()
+        const fileList = fileTree.map(f => `- ${f.name} (${f.path})`).join('\n')
+        const result = `Found ${fileTree.length} files:\n${fileList}`
+        addLog(`Result: Found ${fileTree.length} files`, "info")
+        return result
 
         return "listFiles not implemented"
       }
@@ -166,6 +179,7 @@ export function VoiceAgentPanel() {
 
   return (
     <div className="relative h-screen w-full overflow-hidden">
+        <button onClick={debug}>Debug</button>
       <Card className="flex h-full w-full flex-col items-center justify-center overflow-hidden p-6">
         <div className="flex flex-col items-center gap-6">
         <div className="relative size-32">
